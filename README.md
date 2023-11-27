@@ -2,3 +2,15 @@
 ### Homework 3 from Lab 20 Nov
 
 Please upload the code you use for this homework (in the form of Jupyter notebook, R markdown file, etc) and a separate `pdf` file with the mathematical solutions. 
+
+### Homework 3 Submission for Kenneth Chen
+
+#### Repository Directory
+
+1. Code:
+    - labnov20code.pdf
+    - labnov20code.Rmd
+2. Math:
+    - labnov20math.pdf
+3. Combined:
+    - labnov20combined.pdf
