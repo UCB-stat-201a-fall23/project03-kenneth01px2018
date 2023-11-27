@@ -1,0 +1,144 @@
+---
+title: "STAT 201A Lab (11/20)"
+author: "Kenneth Chen"
+date: '2023-11-26'
+output: pdf_document
+---
+## Problem 1a
+
+$$
+P = \begin{bmatrix}
+    0.2 & 0.7 & 0.1 \\
+    0.2 & 0.5 & 0.3 \\
+    0.2 & 0.4 & 0.4
+  \end{bmatrix}
+$$
+
+## Problem 1b
+
+```{r}
+set.seed(24)
+P <- matrix(c(0.2, 0.7, 0.1, 0.2, 0.5, 0.3, 0.2, 0.4, 0.4), nrow = 3, byrow = T)
+P
+simulate_mc <- function(n, P, X0) {
+    # Generates sequences of length n (including X0)
+    #   P: transition probability matrix
+    #   X0: initial state
+    cur_X <- X0
+    states <- 1:3
+    MC_seq <- numeric(n)
+    MC_seq[1] <- X0
+    for (i in 2:n) {
+        transition_probs <- P[cur_X, ]
+        next_X <- sample(states, size = 1, prob = transition_probs)
+        MC_seq[i] <- next_X
+        cur_X <- next_X
+    }
+    MC_seq
+}
+plot(1:100, simulate_mc(100, P, 1), 
+     xlab = "i", ylab = "State", 
+     type = "b", pch = 19,
+     main = "Realization of Markov Chain (100 Steps, X0 = 1)")
+```
+
+## Problem 2a
+
+```{r}
+eigs <- eigen(t(P))
+stationary_state <- eigs$vectors[, 1]
+stationary_state_norm <- stationary_state / sum(stationary_state)
+eigs
+```
+
+Solving numerically, we see that `r stationary_state` is the solution to $(P^T - I)\pi_\infty = 0$. Normalized, we have $\pi_\infty$ = `r stationary_state_norm`.
+
+## Problem 2b
+
+We plot the convergence for an initial $\pi_0$ close to $\pi_\infty$:
+
+```{r}
+# initial distn close to pi_infinity
+close_initial <- c(0.1, 0.6, 0.3)
+pis <- list()
+pis[[1]] <- close_initial
+n <- 100
+# calculates L2 norm
+l2norm <- function(u, v) {
+    sqrt(sum((u - v)^2))
+}
+l2_norms <- numeric(n)
+for (i in 2:n) {
+    pis[[i]] <- pis[[i - 1]] %*% P
+    l2_norms[i] <- l2norm(pis[[i]], stationary_state_norm)
+}
+
+plot(1:(n - 1), l2_norms[2:n], type = "l",
+     xlab = "i", ylab = "L2 Norm", 
+     main = "Convergence of Probability Distribution (Starting Close)")
+```
+
+We plot the convergence for an initial $\pi_0$ far from $\pi_\infty$:
+
+```{r}
+# initial distn far from pi_infinity
+far_initial <- c(0.7, 0.2, 0.1)
+pis <- list()
+pis[[1]] <- far_initial
+n <- 100
+# calculates L2 norm
+l2norm <- function(u, v) {
+    sqrt(sum((u - v)^2))
+}
+l2_norms <- numeric(n)
+for (i in 2:n) {
+    pis[[i]] <- pis[[i - 1]] %*% P
+    l2_norms[i] <- l2norm(pis[[i]], stationary_state_norm)
+}
+
+plot(1:(n - 1), l2_norms[2:n], type = "l",
+     xlab = "i", ylab = "L2 Norm", 
+     main = "Convergence of Probability Distribution (Starting Far)")
+```
+
+We see $\pi_i$ converges to $\pi_\infty$ ($\pi_i \rightarrow \pi_\infty$) quite quickly regardless of the specific $\pi_0$ value.
+
+## Problem 3a
+
+```{r sims, cache = T}
+# Function that returns arrival time
+until_X3 <- function(X0) {
+    t <- 0
+    cur_X <- X0
+    while (cur_X != 3) {
+        cur_X <- simulate_mc(2, P, cur_X)[2]
+        t <- t + 1
+    }
+    t
+}
+
+# Simulate for X0 = 1
+N <- 1e5
+arrivals_1 <- numeric(N)
+for (i in 1:N) {
+    arrivals_1[i] <- until_X3(1)
+}
+hist(arrivals_1, xlab = "Arrival Time for X0 = 1",
+     main = "Histogram of Arrival Times for X0 = 1")
+
+# Simulate for X0 = 2
+arrivals_2 <- numeric(N)
+for (i in 1:N) {
+    arrivals_2[i] <- until_X3(2)
+}
+hist(arrivals_2, xlab = "Arrival Time for X0 = 2",
+     main = "Histogram of Arrival Times for X0 = 2")
+
+# mean arrival times
+mean_arrival_time1 <- mean(arrivals_1)
+mean_arrival_time2 <- mean(arrivals_2)
+mean_arrival_time1
+mean_arrival_time2
+```
+
+We see that starting from $X_0 = 1$, we have a mean arrival time of `r mean_arrival_time1` and starting from $X_0 = 2$, we have a mean arrival time of `r mean_arrival_time2`.
